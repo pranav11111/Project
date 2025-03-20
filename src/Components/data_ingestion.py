@@ -8,6 +8,9 @@ from sklearn.model_selection import train_test_split
 from imblearn.over_sampling import SMOTE
 from dataclasses import dataclass
 
+from src.Components.data_transformation import Datatransformation
+from src.Components.data_transformation import DataTransformationConfig
+
 @dataclass
 class DataIngesionConfig:
     train_data_path :str = os.path.join('artifact', 'train.csv')
@@ -44,11 +47,13 @@ class DataIngestion:
             
 
             return (self.ingestion_config.test_data_path,
-                    self.ingestion_config.test_data_path,
-                    self.ingestion_config.raw_data_path)
+                    self.ingestion_config.test_data_path)
         except Exception as e:
             raise CustomException(e,sys)
         
 if __name__ == "__main__":
     obj = DataIngestion()
-    obj.initiate_data_ingestion()
+    train_data, test_data = obj.initiate_data_ingestion()
+
+    transformer_obj = Datatransformation()
+    transformer_obj.inititate_transformation(train_data, test_data)

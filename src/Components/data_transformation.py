@@ -3,6 +3,7 @@ import sys
 from dataclasses import dataclass
 from src.exceptions import CustomException
 from src.logger import logging
+from src.utils import save_obj
 
 
 import pandas as pd 
@@ -30,12 +31,13 @@ class Datatransformation:
 
             num_pipeline = Pipeline(
                 steps= 
-                ("scaling", MinMaxScaler)
+               [ ("scaling", MinMaxScaler())]
                 )        
 
             cat_pipeline = Pipeline(
-                ("Encoding", OneHotEncoder),
-                ("Scaling", MinMaxScaler)
+                steps=
+                [("Encoding", OneHotEncoder(sparse_output=False)),
+                ("Scaling", MinMaxScaler())]
 
             )
 
@@ -48,6 +50,8 @@ class Datatransformation:
                 ]
             )
             logging.info('Transformation done')
+
+            return processors
 
         except Exception as e:
             raise CustomException(e, sys)
@@ -73,8 +77,23 @@ class Datatransformation:
             test_target = test_df[target_col]
 
 
-            train_array = pre_obj.fit_transform(train_input)
-            test_array = pre_obj.fit_transform(test_input)
+            train_input_array = pre_obj.fit_transform(train_input)
+            test_input_array = pre_obj.transform(test_input)
 
-        except:
-            pass
+            train_array = np.c_[
+                train_input_array, np.array(train_target)
+            ]
+            test_array = np.c_[
+                test_input_array, np.array(test_target)
+            ]
+
+            logging.info('Saving preprocesser object')
+
+            save_obj(
+                file_path = self.data_transformation_config.preprocessor_obj_file_path,
+                obj = pre_obj
+            )
+
+            return (train_array, test_array, self.data_transformation_config.preprocessor_obj_file_path)
+        except Exception as e:
+            raise CustomException(e, sys)
